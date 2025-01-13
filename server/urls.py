@@ -16,7 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
+from django.conf.urls import include
+from customer import urls as customer_urls
+from sale import urls as sale_urls
+from product import urls as product_urls
+from category import urls as category_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-]
+    path('api/customer/', include(customer_urls)),
+    path('api/sale/', include(sale_urls)),
+    path('api/product/', include(product_urls)),
+    path('api/category/', include(category_urls)),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
