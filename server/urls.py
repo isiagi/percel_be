@@ -23,6 +23,8 @@ from customer import urls as customer_urls
 from sale import urls as sale_urls
 from product import urls as product_urls
 from category import urls as category_urls
+from expense import urls as expense_urls
+from supplier import urls as supplier_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,4 +32,6 @@ urlpatterns = [
     path('api/sale/', include(sale_urls)),
     path('api/product/', include(product_urls)),
     path('api/category/', include(category_urls)),
+    path('api/expense/', include(expense_urls)),
+    path('api/supplier/', include(supplier_urls)),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
