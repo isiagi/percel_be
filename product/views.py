@@ -1,16 +1,36 @@
 from rest_framework.viewsets import ModelViewSet
 from product.models import Product
-from product.serializers import ProductSerializer
+from product.serializers import ProductSerializer, ProductStockSerializer
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from stock.models import StockMovement
 from stock.serializers import StockMovementSerializer
 from stock.models import StockAdjustment
+from .services import ProductStockService
+from category.models import Category
 
 class ProductViewSet(ModelViewSet):
     queryset = Product.objects.all()
-    serializer_class = ProductSerializer
+    serializer_class = ProductStockSerializer
+
+    def create(self, request, *args, **kwargs):
+        product_data = request.data
+        category_id = product_data.get('category')
+
+        try:
+            category = Category.objects.get(id=category_id)
+        except Category.DoesNotExist:
+            return Response({'error': 'Invalid category ID'}, status=400)
+
+        initial_stock = int(product_data.pop('initial_stock', 0))
+        user = request.user
+
+        product_data['category'] = category  # Replace ID with the instance
+        product = ProductStockService.create_product_with_stock(product_data, initial_stock, user)
+
+        serializer = self.get_serializer(product)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
     def add_stock(self, request, pk=None):
@@ -18,23 +38,14 @@ class ProductViewSet(ModelViewSet):
         quantity = int(request.data.get('quantity', 0))
         reference = request.data.get('reference', '')
         notes = request.data.get('notes', '')
-
-        movement = StockMovement.objects.create(
-            product=product,
-            movement_type='IN',
-            quantity=quantity,
-            reference=reference,
-            notes=notes
-        )
-
-        return Response({
-            'message': f'Added {quantity} units to stock',
-            'current_stock': product.available_stock
-        })
+        user = request.user
+        ProductStockService.add_stock(product, quantity, reference, notes, user)
+        return Response({'message': 'Stock added successfully'})
 
     @action(detail=True, methods=['get'])
     def stock_history(self, request, pk=None):
         product = self.get_object()
+        print(product)
         movements = StockMovement.objects.filter(product=product).order_by('-created_at')
         serializer = StockMovementSerializer(movements, many=True)
         return Response(serializer.data)

@@ -1,7 +1,7 @@
 from django.db import models
 from customer.models import Customer
 from product.models import Product
-from django.contrib.auth.models import User
+from users.models import CustomUser as User
 from stock.models import StockMovement
 from django.db.models import Sum, F
 

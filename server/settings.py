@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'users',
     'category',
     'customer',
     'product',
@@ -76,6 +77,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'server.wsgi.application'
+
+
+AUTH_USER_MODEL = 'users.CustomUser'
 
 import os
 

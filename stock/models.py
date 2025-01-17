@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from users.models import CustomUser as User
 from product.models import Product
 from django.core.exceptions import ValidationError
 
@@ -18,18 +18,15 @@ class StockMovement(models.Model):
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
 
-    def save(self, *args, **kwargs):
-        # Update product's available stock
-        if self.movement_type == 'IN':
-            self.product.available_stock += self.quantity
-        elif self.movement_type == 'OUT':
-            if self.product.available_stock < self.quantity:
-                raise ValidationError("Insufficient stock available")
-            self.product.available_stock -= self.quantity
-        elif self.movement_type == 'ADJUST':
-            self.product.available_stock += self.quantity  # quantity can be negative for reduction
+    def clean(self):
+        if self.movement_type == 'OUT':
+            # Calculate available stock before this movement
+            current_stock = self.product.available_stock
+            if current_stock < self.quantity:
+                raise ValidationError(f"Insufficient stock. Available: {current_stock}")
 
-        self.product.save()
+    def save(self, *args, **kwargs):
+        self.full_clean()
         super().save(*args, **kwargs)
 
 

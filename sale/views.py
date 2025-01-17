@@ -23,7 +23,7 @@ class SaleViewSet(viewsets.ModelViewSet):
         sales = Sale.objects.filter(
             sale_date__gte=start_date
         ).values('sale_date__date').annotate(
-            total_sales=Sum(F('items__quantity') * F('items__unit_price'))
+            total_sales=Sum(F('items__quantity') * F('items__price'))
         ).order_by('sale_date__date')
         
         return Response(sales)

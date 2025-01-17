@@ -28,6 +28,7 @@ from supplier import urls as supplier_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/auth/', include('users.urls')),
     path('api/customer/', include(customer_urls)),
     path('api/sale/', include(sale_urls)),
     path('api/product/', include(product_urls)),
