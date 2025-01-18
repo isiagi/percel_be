@@ -15,7 +15,7 @@ class ProductStockService:
             quantity=initial_stock,
             reference='Initial Stock',
             notes='Initial stock on product creation',
-            # created_by=user
+            created_by=user
         )
         
         return product

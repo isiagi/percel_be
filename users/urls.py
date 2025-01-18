@@ -3,14 +3,8 @@ from .views import AuthViewSet
 from django.urls import path, include
 
 router = routers.DefaultRouter()
-router.register('auth', AuthViewSet)
+router.register('auth', AuthViewSet, basename='auth')  # Added basename parameter
 
-
-# urlpatterns = [
-#     path('', include(router.urls)),
-# ]
-
-urlpatterns = router.urls
-
-
-
+urlpatterns = [
+    path('', include(router.urls)),
+]

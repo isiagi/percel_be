@@ -16,6 +16,7 @@ class StockMovement(models.Model):
     quantity = models.IntegerField()  # Can be negative for stock out
     reference = models.CharField(max_length=100, blank=True)  # e.g., "Sale #123", "Purchase #456"
     notes = models.TextField(blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     def clean(self):

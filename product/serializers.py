@@ -9,7 +9,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['id', 'name', 'category', 'description', 'price', 'initial_stock', 
                  'available_stock', 'reorder_point', 'stock_status', 'image', 
-                 'created_at', 'updated_at']
+                 'created_at', 'updated_at', 'created_by']
         
 
 
@@ -21,4 +21,4 @@ class ProductStockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'category', 'price', 'initial_stock', 
-                 'available_stock', 'stock_status', 'reorder_point']
+                 'available_stock', 'stock_status', 'reorder_point', 'created_by', 'selling_price', 'cbm']

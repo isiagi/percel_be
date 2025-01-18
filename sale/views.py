@@ -5,15 +5,20 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from datetime import datetime, timedelta
 from django.db.models import Sum, F
+from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
 
 class SaleViewSet(viewsets.ModelViewSet):
     queryset = Sale.objects.all()
     serializer_class = SaleSerializer
+    permission_classes = [IsAuthenticated]
 
-    # def perform_create(self, serializer):
-    #     serializer.save(created_by=self.request.user)
+    def get_queryset(self):
+        return self.queryset.filter(created_by=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
 
     @action(detail=False, methods=['get'])
     def daily_sales(self, request):

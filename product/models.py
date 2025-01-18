@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.validators import FileExtensionValidator 
-from django.contrib.auth.models import User
+from users.models import CustomUser as User
 from category.models import Category
 from django.db.models import Sum
 
@@ -15,13 +15,14 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    selling_price = models.DecimalField(max_digits=10, decimal_places=2)
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     # initial_stock = models.PositiveIntegerField(null=True, blank=True, default=0)
     # available_stock = models.PositiveIntegerField()
     cbm = models.FloatField(null=True, blank=True)
     supplier = models.ForeignKey('supplier.Supplier', on_delete=models.SET_NULL, null=True, blank=True)
     reorder_point = models.PositiveIntegerField(default=10)  # Alert when stock reaches this level
-    image = models.ImageField(upload_to='products/', null=True, blank=True)
+    image = models.ImageField(upload_to=upload_to, null=True, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
@@ -53,9 +54,10 @@ class Product(models.Model):
     @property
     def stock_status(self):
         current_stock = self.available_stock
+        reorder_point = int(self.reorder_point)
         if current_stock <= 0:
             return "Out of Stock"
-        elif current_stock <= self.reorder_point:
+        elif current_stock <= reorder_point:
             return "Low Stock"
         return "In Stock"
 
