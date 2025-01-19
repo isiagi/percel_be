@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "corsheaders",
+    "cloudinary",
     'rest_framework',
     'rest_framework.authtoken',
     'users',
@@ -127,6 +128,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+import environ
+import os
+
+# Initialize Django-environ
+env = environ.Env(DEBUG=(bool, False))
+
+# Define a path to your project's .env file (optional)
+env_file = os.path.join(BASE_DIR, ".env")
+
+# Load environment variables from the .env file (if it exists)
+env.read_env(env_file)
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
@@ -145,8 +158,36 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'mediafiles')
 MEDIA_URL = '/mediafiles/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
+
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dlwwwlysp',
+    'API_KEY': '621165238251166',
+    'API_SECRET': 'H5F9cBgQTD7yCUkanRoxyFRZb9g'
+}
+
+# Initialize cloudinary
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+    api_key=CLOUDINARY_STORAGE['API_KEY'],
+    api_secret=CLOUDINARY_STORAGE['API_SECRET']
+)
+
+import dj_database_url
+
+DATABASES = {
+    'default': dj_database_url.config(
+        default=env("DATABASE_URL"),
+        conn_max_age=env("CONN_MAX_AGE", cast=int),
+        ssl_require=env("SSL_REQUIRE", cast=bool),
+        conn_health_checks=env("CONN_HEALTH_CHECKS", cast=bool),
+    )
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
