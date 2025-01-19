@@ -6,6 +6,8 @@ class Supplier(models.Model):
     address = models.CharField(max_length=255)
     email = models.EmailField()
     phone = models.CharField(max_length=20)
+    contact = models.CharField(max_length=255, blank=True, null=True)
+    created_by = models.ForeignKey('users.CustomUser', on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
         return self.name

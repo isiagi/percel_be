@@ -25,9 +25,11 @@ from product import urls as product_urls
 from category import urls as category_urls
 from expense import urls as expense_urls
 from supplier import urls as supplier_urls
+from users import urls as users_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/users/', include(users_urls)),
     path('api/customer/', include(customer_urls)),
     path('api/sale/', include(sale_urls)),
     path('api/product/', include(product_urls)),
