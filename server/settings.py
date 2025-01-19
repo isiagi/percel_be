@@ -71,6 +71,7 @@ REST_FRAMEWORK = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    'https://stockmanagementappweb.netlify.app'
 ]
 
 ROOT_URLCONF = 'server.urls'
