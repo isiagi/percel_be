@@ -219,3 +219,41 @@ class ProductViewSet(ModelViewSet):
         adjustments = product.adjustments.all().order_by('-date')
         serializer = StockAdjustmentSerializer(adjustments, many=True)
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def investment_summary(self, request):
+        """Get comprehensive investment and returns summary for all products"""
+        products = self.get_queryset()
+        
+        total_investment = sum(product.total_investment for product in products)
+        total_realized_returns = sum(product.realized_returns for product in products)
+        total_potential_returns = sum(product.potential_returns for product in products)
+
+        # If total_re
+       
+        
+        return Response({
+            'total_investment': total_investment,
+            'realized_returns': total_realized_returns,
+            'potential_returns': total_potential_returns,
+            'total_returns': total_realized_returns + total_potential_returns,
+            'realized_profit': max(0, total_realized_returns - total_investment) if total_investment else 0,
+            'potential_total_profit': (total_realized_returns + total_potential_returns) - total_investment if total_investment else 0
+        })
+
+    @action(detail=True, methods=['get'])
+    def product_investment(self, request, pk=None):
+        """Get detailed investment analysis for a specific product"""
+        product = self.get_object()
+        return Response({
+            'product_name': product.name,
+            'total_investment': product.total_investment,
+            'realized_returns': product.realized_returns,
+            'potential_returns': product.potential_returns,
+            'total_returns': product.total_returns,
+            'realized_profit': product.realized_returns - product.total_investment if product.total_investment else 0,
+            'potential_total_profit': product.total_returns - product.total_investment if product.total_investment else 0,
+            'current_stock': product.available_stock,
+            'selling_price': product.selling_price,
+            'purchase_price': product.price
+        })
