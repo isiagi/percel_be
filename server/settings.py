@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-h*zi$ogb7nu)2cs06u@j2p$%xj_h7f3ly1445g8%0wfaj)g35b
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['percel-be.onrender.com']
+ALLOWED_HOSTS = ['percel-be.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
