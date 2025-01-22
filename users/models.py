@@ -5,8 +5,6 @@ from .managers import CustomUserManager
 # Create your models here.
 
 class CustomUser(AbstractUser):
-    # is_employer = models.BooleanField(default=False)
-    # is_applicant = models.BooleanField(default=False)   
 
     objects = CustomUserManager()
 

@@ -17,7 +17,7 @@ class Sale(models.Model):
     sale_date = models.DateTimeField(auto_now_add=True)
     payment_method = models.CharField(max_length=10, choices=PAYMENT_METHODS)
     notes = models.TextField(blank=True)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
     @property
     def total_amount(self):
@@ -34,6 +34,7 @@ class SaleItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    notes = models.TextField(blank=True)
     
     def save(self, *args, **kwargs):
         if not self.pk:  # Only on creation
@@ -42,6 +43,8 @@ class SaleItem(models.Model):
                 product=self.product,
                 movement_type='OUT',
                 quantity=self.quantity,
-                reference=f'Sale #{self.sale.id}'
+                reference=f'Sale #{self.sale.id}',
+                created_by=self.sale.created_by,
+                notes=self.notes
             )
         super().save(*args, **kwargs)
