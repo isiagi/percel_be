@@ -28,9 +28,17 @@ class ProductViewSet(ModelViewSet):
     def create(self, request, *args, **kwargs):
         product_data = request.data.copy()
         
-        # Debug print statements
-        print("Received Files:", request.FILES)
-        print("Received Data:", product_data)
+        # Extract and validate initial stock before any other processing
+        try:
+            initial_stock = int(request.data.get('initial_stock', 0))
+            # Remove initial_stock from product_data if it exists
+            if 'initial_stock' in product_data:
+                product_data.pop('initial_stock')
+        except (ValueError, TypeError):
+            return Response({
+                'error': 'Invalid initial stock value',
+                'detail': 'Initial stock must be a valid number'
+            }, status=400)
         
         # Validate category
         try:
@@ -50,11 +58,8 @@ class ProductViewSet(ModelViewSet):
 
         # Handle image upload to Cloudinary
         image_file = request.FILES.get('image')
-        print("Image file:", image_file)  # Debug print
-        
         if image_file:
             try:
-                print("Attempting to upload to Cloudinary...")
                 upload_result = cloudinary.uploader.upload(
                     image_file,
                     folder="products/",
@@ -62,59 +67,36 @@ class ProductViewSet(ModelViewSet):
                     use_filename=True,
                     unique_filename=True
                 )
-                print("Cloudinary upload result:", upload_result)
-                
-                # Make sure image URL is properly set in product_data
-                # Convert QueryDict to mutable dictionary if needed
                 if hasattr(product_data, '_mutable'):
                     product_data._mutable = True
                 product_data['image'] = upload_result['secure_url']
-                print("Set image URL in product_data:", product_data['image'])  # Debug print
                 
             except Exception as e:
-                print(f"Cloudinary upload error: {str(e)}")
                 return Response({
                     'error': f'Image upload failed: {str(e)}',
                     'detail': 'Error uploading to Cloudinary'
                 }, status=400)
         
-        try:
-            initial_stock = int(product_data.get('initial_stock', 0))
-            if 'initial_stock' in product_data:
-                product_data.pop('initial_stock')
-        except (ValueError, TypeError):
-            return Response({'error': 'Invalid initial stock value'}, status=400)
-
         product_data['created_by'] = request.user.id
 
         try:
-            print("Final product data:", product_data)
+            # Validate the data using serializer
             serializer = self.get_serializer(data=product_data)
-            print("Serializer initial data:", serializer.initial_data)  # Debug print
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+            # Use ProductStockService to create product with initial stock
+            product = ProductStockService.create_product_with_stock(
+                product_data=serializer.validated_data,
+                initial_stock=initial_stock,
+                user=request.user
+            )
             
-            if serializer.is_valid():
-                print("Serializer validated data:", serializer.validated_data)  # Debug print
-                product = serializer.save()
-                print("Saved product image URL:", product.image)  # Debug print
+            # Get fresh serializer data
+            result_serializer = self.get_serializer(product)
+            return Response(result_serializer.data, status=status.HTTP_201_CREATED)
                 
-                if initial_stock > 0:
-                    ProductStockService.add_stock(
-                        product=product,
-                        quantity=initial_stock,
-                        reference="Initial stock",
-                        notes="Initial stock on product creation",
-                        user=request.user
-                    )
-                
-                # Get fresh serializer data
-                result_serializer = self.get_serializer(product)
-                return Response(result_serializer.data, status=status.HTTP_201_CREATED)
-                
-            print("Serializer errors:", serializer.errors)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
         except Exception as e:
-            print(f"Error saving product: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, *args, **kwargs):
@@ -184,6 +166,15 @@ class ProductViewSet(ModelViewSet):
             return Response({'error': 'Invalid quantity value'}, status=400)
         except Exception as e:
             return Response({'error': str(e)}, status=400)
+        
+    @action(detail=False, methods=['get'])
+    def all_stock_movements(self, request):
+        """
+        Retrieve all stock movements across all products.
+        """
+        movements = StockMovement.objects.all().order_by('-created_at')
+        serializer = StockMovementSerializer(movements, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['get'])
     def stock_history(self, request, pk=None):
@@ -228,3 +219,41 @@ class ProductViewSet(ModelViewSet):
         adjustments = product.adjustments.all().order_by('-date')
         serializer = StockAdjustmentSerializer(adjustments, many=True)
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def investment_summary(self, request):
+        """Get comprehensive investment and returns summary for all products"""
+        products = self.get_queryset()
+        
+        total_investment = sum(product.total_investment for product in products)
+        total_realized_returns = sum(product.realized_returns for product in products)
+        total_potential_returns = sum(product.potential_returns for product in products)
+
+        # If total_re
+       
+        
+        return Response({
+            'total_investment': total_investment,
+            'realized_returns': total_realized_returns,
+            'potential_returns': total_potential_returns,
+            'total_returns': total_realized_returns + total_potential_returns,
+            'realized_profit': max(0, total_realized_returns - total_investment) if total_investment else 0,
+            'potential_total_profit': (total_realized_returns + total_potential_returns) - total_investment if total_investment else 0
+        })
+
+    @action(detail=True, methods=['get'])
+    def product_investment(self, request, pk=None):
+        """Get detailed investment analysis for a specific product"""
+        product = self.get_object()
+        return Response({
+            'product_name': product.name,
+            'total_investment': product.total_investment,
+            'realized_returns': product.realized_returns,
+            'potential_returns': product.potential_returns,
+            'total_returns': product.total_returns,
+            'realized_profit': product.realized_returns - product.total_investment if product.total_investment else 0,
+            'potential_total_profit': product.total_returns - product.total_investment if product.total_investment else 0,
+            'current_stock': product.available_stock,
+            'selling_price': product.selling_price,
+            'purchase_price': product.price
+        })

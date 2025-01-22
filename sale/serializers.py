@@ -8,7 +8,7 @@ class SaleItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SaleItem
-        fields = ['id', 'product', 'product_name', 'quantity', 'price', 'total_price']
+        fields = ['id', 'product', 'notes', 'product_name', 'quantity', 'price', 'total_price']
 
     def get_total_price(self, obj):
         return obj.quantity * obj.price
@@ -34,6 +34,7 @@ class SaleSerializer(serializers.ModelSerializer):
         sale = Sale.objects.create(**validated_data)
         
         for item_data in items_data:
-            SaleItem.objects.create(sale=sale, **item_data)
+            SaleItem.objects.create(sale=sale, notes=item_data.pop('notes', None), **item_data)
         
         return sale
+        
